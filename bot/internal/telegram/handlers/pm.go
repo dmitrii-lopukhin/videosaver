@@ -22,6 +22,7 @@ type JobDequeuer interface {
 
 // CacheSetter is the subset of cache.Client used by PMHandler.
 type CacheSetter interface {
+	Set(ctx context.Context, key, value string, ttl time.Duration) error
 	SetJSON(ctx context.Context, key string, v any, ttl time.Duration) error
 	Lock(ctx context.Context, key string, ttl time.Duration) (bool, error)
 	Unlock(ctx context.Context, key string) error
@@ -53,7 +54,8 @@ func (h *PMHandler) OverrideExtractor(e extractors.Extractor) {
 }
 
 // ProcessJob resolves the job and calls sendFn with the result.
-func (h *PMHandler) ProcessJob(ctx context.Context, jobID string, userID int64, sendFn func(*extractors.VideoResult) error) error {
+// sendFn returns (fileID, error) — fileID is cached in Redis if non-empty.
+func (h *PMHandler) ProcessJob(ctx context.Context, jobID string, userID int64, sendFn func(*extractors.VideoResult) (string, error)) error {
 	job, err := h.queue.Dequeue(ctx, jobID)
 	if err != nil {
 		return err
@@ -83,8 +85,13 @@ func (h *PMHandler) ProcessJob(ctx context.Context, jobID string, userID int64, 
 		_ = h.cache.SetJSON(ctx, cacheKey, result, 24*time.Hour)
 	}
 
-	if err := sendFn(result); err != nil {
+	fileID, err := sendFn(result)
+	if err != nil {
 		return fmt.Errorf("pm: send: %w", err)
+	}
+
+	if fileID != "" {
+		_ = h.cache.Set(ctx, cache.VideoFileIDKey(norm, job.Audio, job.Quality), fileID, 24*time.Hour)
 	}
 
 	_ = h.queue.Delete(ctx, jobID)
@@ -102,10 +109,10 @@ func (h *PMHandler) Handle(bot *tele.Bot, log zerolog.Logger) tele.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(h.pmTimeoutSec)*time.Second)
 		defer cancel()
 
-		sendFn := func(result *extractors.VideoResult) error {
+		sendFn := func(result *extractors.VideoResult) (string, error) {
 			return download.StreamToTelegram(
 				ctx, bot, c.Recipient(),
-				result.DirectURL, result.Title, result.DurationSec,
+				result.DirectURL, result.DurationSec,
 				h.downloadMaxBytes,
 			)
 		}

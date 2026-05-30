@@ -10,6 +10,7 @@ import (
 )
 
 // CacheClient combines the cache interfaces required by the handlers.
+// cache.Client satisfies all of these.
 type CacheClient interface {
 	handlers.CacheClient
 	handlers.CacheSetter

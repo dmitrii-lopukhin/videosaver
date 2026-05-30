@@ -26,9 +26,12 @@ func (f *fakeExtractor) Resolve(_ context.Context, _ string, _ extractors.Resolv
 	return &extractors.VideoResult{DirectURL: "https://cdn/v.mp4", Title: "t", DurationSec: 10, SizeBytes: -1}, nil
 }
 
-type fakeCache struct{ hit bool }
+type fakeCache struct {
+	fileID string
+}
 
-func (f *fakeCache) GetJSON(_ context.Context, _ string, _ any) (bool, error) { return f.hit, nil }
+func (f *fakeCache) Get(_ context.Context, _ string) (string, error)         { return f.fileID, nil }
+func (f *fakeCache) GetJSON(_ context.Context, _ string, _ any) (bool, error) { return f.fileID != "", nil }
 func (f *fakeCache) Lock(_ context.Context, _ string, _ time.Duration) (bool, error) {
 	return true, nil
 }
@@ -48,16 +51,16 @@ func TestInlineHandler_UnknownURL(t *testing.T) {
 	}
 }
 
-func TestInlineHandler_CacheHit(t *testing.T) {
-	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{hit: true}, &fakeQueue{}, 8)
+func TestInlineHandler_CacheHit_WithFileID(t *testing.T) {
+	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{fileID: "tg-file-id-123"}, &fakeQueue{}, 8)
 	result := h.Classify("https://instagram.com/p/ABC/")
 	if result != handlers.ClassifyCacheHit {
 		t.Errorf("expected ClassifyCacheHit, got %v", result)
 	}
 }
 
-func TestInlineHandler_CacheMiss(t *testing.T) {
-	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{hit: false}, &fakeQueue{}, 8)
+func TestInlineHandler_CacheMiss_NoFileID(t *testing.T) {
+	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{fileID: ""}, &fakeQueue{}, 8)
 	result := h.Classify("https://instagram.com/p/ABC/")
 	if result != handlers.ClassifyCacheMiss {
 		t.Errorf("expected ClassifyCacheMiss, got %v", result)
