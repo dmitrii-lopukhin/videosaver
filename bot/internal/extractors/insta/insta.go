@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -40,8 +41,13 @@ func New(baseURL string, timeout time.Duration) *Extractor {
 	}
 }
 
-func (e *Extractor) CanHandle(url string) bool {
-	return strings.Contains(url, "instagram.com")
+func (e *Extractor) CanHandle(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil || u.User != nil {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	return host == "instagram.com" || strings.HasSuffix(host, ".instagram.com")
 }
 
 func (e *Extractor) Resolve(ctx context.Context, url string, opts extractors.ResolveOpts) (*extractors.VideoResult, error) {

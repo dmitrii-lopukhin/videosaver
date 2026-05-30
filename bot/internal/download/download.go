@@ -26,7 +26,8 @@ func Fetch(ctx context.Context, directURL string, maxBytes int64) (io.ReadCloser
 
 	if resp.StatusCode != http.StatusOK {
 		resp.Body.Close()
-		return nil, fmt.Errorf("download: HTTP %d from %s", resp.StatusCode, directURL)
+		host := resp.Request.URL.Host
+		return nil, fmt.Errorf("download: HTTP %d from %s", resp.StatusCode, host)
 	}
 
 	if resp.ContentLength > 0 && resp.ContentLength > maxBytes {
