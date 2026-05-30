@@ -21,7 +21,11 @@ func main() {
 	}
 
 	log := logger.New(cfg.LogLevel, os.Stdout)
-	log.Info().Msg("videosaver bot starting")
+	log.Info().
+		Str("insta_resolver_url", cfg.InstaResolverURL).
+		Int("insta_resolver_timeout_sec", cfg.InstaResolverTimeoutSec).
+		Int64("download_max_bytes", cfg.DownloadMaxBytes).
+		Msg("videosaver bot starting")
 
 	rdb, err := cache.New(cfg.RedisURL)
 	if err != nil {

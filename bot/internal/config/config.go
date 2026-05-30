@@ -9,22 +9,26 @@ import (
 )
 
 type Config struct {
-	BotToken         string
-	RedisURL         string
-	InstaResolverURL string
-	CacheTTLSec      int
-	LogLevel         string
+	BotToken                string
+	RedisURL                string
+	InstaResolverURL        string
+	InstaResolverTimeoutSec int
+	CacheTTLSec             int
+	DownloadMaxBytes        int64
+	LogLevel                string
 }
 
 func Load() (*Config, error) {
 	_ = godotenv.Load() // .env is optional (docker-compose injects via env_file)
 
 	cfg := &Config{
-		BotToken:         os.Getenv("BOT_TOKEN"),
-		RedisURL:         getEnv("REDIS_URL", "redis://localhost:6379/0"),
-		InstaResolverURL: getEnv("INSTA_RESOLVER_URL", "http://insta-resolver:8000"),
-		CacheTTLSec:      getEnvInt("CACHE_TTL_SEC", 86400),
-		LogLevel:         getEnv("LOG_LEVEL", "info"),
+		BotToken:                os.Getenv("BOT_TOKEN"),
+		RedisURL:                getEnv("REDIS_URL", "redis://localhost:6379/0"),
+		InstaResolverURL:        getEnv("INSTA_RESOLVER_URL", "http://insta-resolver:8000"),
+		InstaResolverTimeoutSec: getEnvInt("INSTA_RESOLVER_TIMEOUT_SEC", 30),
+		CacheTTLSec:             getEnvInt("CACHE_TTL_SEC", 86400),
+		DownloadMaxBytes:        getEnvInt64("DOWNLOAD_MAX_BYTES", 52428800),
+		LogLevel:                getEnv("LOG_LEVEL", "info"),
 	}
 
 	if cfg.BotToken == "" {
@@ -43,6 +47,15 @@ func getEnv(key, fallback string) string {
 func getEnvInt(key string, fallback int) int {
 	if v := os.Getenv(key); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
+			return i
+		}
+	}
+	return fallback
+}
+
+func getEnvInt64(key string, fallback int64) int64 {
+	if v := os.Getenv(key); v != "" {
+		if i, err := strconv.ParseInt(v, 10, 64); err == nil {
 			return i
 		}
 	}

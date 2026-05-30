@@ -42,6 +42,30 @@ func TestLoad_MissingBotTokenIsError(t *testing.T) {
 	}
 }
 
+func TestLoad_InstaResolverTimeout(t *testing.T) {
+	t.Setenv("BOT_TOKEN", "x")
+	t.Setenv("INSTA_RESOLVER_TIMEOUT_SEC", "45")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.InstaResolverTimeoutSec != 45 {
+		t.Errorf("InstaResolverTimeoutSec = %d, want 45", cfg.InstaResolverTimeoutSec)
+	}
+}
+
+func TestLoad_DownloadMaxBytesDefault(t *testing.T) {
+	t.Setenv("BOT_TOKEN", "x")
+	os.Unsetenv("DOWNLOAD_MAX_BYTES")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.DownloadMaxBytes != 52428800 {
+		t.Errorf("DownloadMaxBytes = %d, want 52428800", cfg.DownloadMaxBytes)
+	}
+}
+
 func TestLoad_DefaultsWhenEnvAbsent(t *testing.T) {
 	t.Setenv("BOT_TOKEN", "x")
 	os.Unsetenv("REDIS_URL")
