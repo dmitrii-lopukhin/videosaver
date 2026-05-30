@@ -13,6 +13,7 @@ type Config struct {
 	RedisURL                string
 	InstaResolverURL        string
 	InstaResolverTimeoutSec int
+	InlineTimeoutSec        int
 	CacheTTLSec             int
 	DownloadMaxBytes        int64
 	LogLevel                string
@@ -26,6 +27,7 @@ func Load() (*Config, error) {
 		RedisURL:                getEnv("REDIS_URL", "redis://localhost:6379/0"),
 		InstaResolverURL:        getEnv("INSTA_RESOLVER_URL", "http://insta-resolver:8000"),
 		InstaResolverTimeoutSec: getEnvInt("INSTA_RESOLVER_TIMEOUT_SEC", 30),
+		InlineTimeoutSec:        getEnvInt("INLINE_TIMEOUT_SEC", 8),
 		CacheTTLSec:             getEnvInt("CACHE_TTL_SEC", 86400),
 		DownloadMaxBytes:        getEnvInt64("DOWNLOAD_MAX_BYTES", 52428800),
 		LogLevel:                getEnv("LOG_LEVEL", "info"),

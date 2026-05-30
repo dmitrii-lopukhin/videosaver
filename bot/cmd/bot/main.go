@@ -7,8 +7,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/dmitrii-lopukhin/videosaver/bot/internal/cache"
 	"github.com/dmitrii-lopukhin/videosaver/bot/internal/config"
+	"github.com/dmitrii-lopukhin/videosaver/bot/internal/extractors"
+	"github.com/dmitrii-lopukhin/videosaver/bot/internal/extractors/insta"
+	"github.com/dmitrii-lopukhin/videosaver/bot/internal/jobs"
 	"github.com/dmitrii-lopukhin/videosaver/bot/internal/logger"
 	"github.com/dmitrii-lopukhin/videosaver/bot/internal/telegram"
 )
@@ -40,7 +45,22 @@ func main() {
 	}
 	log.Info().Msg("redis connected")
 
-	bot, err := telegram.NewBot(cfg.BotToken, log)
+	instaExt := insta.New(cfg.InstaResolverURL, time.Duration(cfg.InstaResolverTimeoutSec)*time.Second)
+	registry := extractors.NewRegistry(instaExt)
+
+	opts, _ := redis.ParseURL(cfg.RedisURL)
+	rawRDB := redis.NewClient(opts)
+	jobQueue := jobs.NewQueue(rawRDB, 10*time.Minute)
+
+	bot, err := telegram.NewBot(cfg.BotToken, telegram.Deps{
+		Registry:         registry,
+		Cache:            rdb,
+		JobQueue:         jobQueue,
+		InlineTimeoutSec: cfg.InlineTimeoutSec,
+		PMTimeoutSec:     5 * 60,
+		DownloadMaxBytes: cfg.DownloadMaxBytes,
+		Log:              log,
+	})
 	if err != nil {
 		log.Fatal().Err(err).Msg("telegram init")
 	}

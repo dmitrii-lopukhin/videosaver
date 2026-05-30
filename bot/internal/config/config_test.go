@@ -66,6 +66,18 @@ func TestLoad_DownloadMaxBytesDefault(t *testing.T) {
 	}
 }
 
+func TestLoad_InlineCacheTimeoutDefault(t *testing.T) {
+	t.Setenv("BOT_TOKEN", "x")
+	os.Unsetenv("INLINE_TIMEOUT_SEC")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.InlineTimeoutSec != 8 {
+		t.Errorf("InlineTimeoutSec = %d, want 8", cfg.InlineTimeoutSec)
+	}
+}
+
 func TestLoad_DefaultsWhenEnvAbsent(t *testing.T) {
 	t.Setenv("BOT_TOKEN", "x")
 	os.Unsetenv("REDIS_URL")
