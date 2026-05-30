@@ -14,3 +14,11 @@ func VideoKey(normalizedURL string, audio bool, quality string) string {
 func VideoLockKey(normalizedURL string) string {
 	return fmt.Sprintf("video:%s:lock", normalizedURL)
 }
+
+// VideoFileIDKey returns the key for storing a Telegram file_id after first upload.
+func VideoFileIDKey(normalizedURL string, audio bool, quality string) string {
+	if quality == "" {
+		quality = "best"
+	}
+	return fmt.Sprintf("video:%s:audio=%v:q=%s:file_id", normalizedURL, audio, quality)
+}
