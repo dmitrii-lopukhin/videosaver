@@ -13,7 +13,7 @@ services:
     build: ./insta-resolver
     env_file: .env
     volumes:
-      - ./insta-resolver/sessions:/app/sessions:ro
+      - ./insta-resolver/sessions:/app/sessions
     restart: unless-stopped
 
   redis:
