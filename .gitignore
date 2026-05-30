@@ -40,3 +40,6 @@ Thumbs.db
 # Build artifacts
 *.tgz
 *.tar.gz
+
+# Local-only design docs (kept outside the repo)
+docs/

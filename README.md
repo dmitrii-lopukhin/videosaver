@@ -1,56 +1,53 @@
 # VideoSaver
 
-Telegram inline-бот для скачивания видео из социальных сетей.
+Telegram inline bot for downloading videos from social networks.
 
-> Статус: переписывается с Python (Playwright + savefrom) на Go (telebot.v3) + Python insta-resolver (instaloader). Этот коммит — foundation skeleton.
+> Status: being rewritten from Python (Playwright + savefrom) to Go (telebot.v3) + a Python insta-resolver (instaloader). This commit is the foundation skeleton.
 
-## Архитектура
+## Architecture
 
-- `bot/` — Go-сервис (Telegram-бот, оркестрация, кэш, extractors)
-- `insta-resolver/` — Python-сервис, обёртка над instaloader (только для Instagram)
-- Redis — кэш + job-queue + account pool state
+- `bot/` — Go service (Telegram bot, orchestration, cache, extractors)
+- `insta-resolver/` — Python service, a wrapper around instaloader (Instagram only)
+- Redis — cache + job queue + account pool state
 
-См. `docs/superpowers/specs/2026-05-30-videosaver-go-migration-design.md` — полный design.
-См. `docs/superpowers/plans/` — пошаговые планы реализации.
+## Local run
 
-## Локальный запуск
+Requires Docker and Docker Compose v2.
 
-Требуется Docker и Docker Compose v2.
-
-1. Скопируй конфиг и пропиши токен бота:
+1. Copy the config and set the bot token:
 
    ```bash
    cp .env.example .env
-   # отредактируй .env, поставь BOT_TOKEN от @BotFather
+   # edit .env, set BOT_TOKEN from @BotFather
    ```
 
-2. Подними всё:
+2. Bring everything up:
 
    ```bash
    docker compose up -d --build
    ```
 
-3. Проверь:
+3. Check it:
 
    ```bash
    docker compose logs -f bot
    ```
 
-   В Telegram отправь `/start` своему боту — он должен ответить заглушкой.
+   In Telegram, send `/start` to your bot — it should reply with a placeholder.
 
-## Переменные окружения
+## Environment variables
 
-| Переменная | По умолчанию | Описание |
+| Variable | Default | Description |
 |---|---|---|
-| `BOT_TOKEN` | — | Токен от @BotFather (обязательно) |
-| `REDIS_URL` | `redis://redis:6379/0` | URL Redis |
-| `INSTA_RESOLVER_URL` | `http://insta-resolver:8000` | URL Python-сервиса |
-| `CACHE_TTL_SEC` | `86400` | TTL кэша (24 часа) |
+| `BOT_TOKEN` | — | Token from @BotFather (required) |
+| `REDIS_URL` | `redis://redis:6379/0` | Redis URL |
+| `INSTA_RESOLVER_URL` | `http://insta-resolver:8000` | Python service URL |
+| `CACHE_TTL_SEC` | `86400` | Cache TTL (24 hours) |
 | `LOG_LEVEL` | `info` | trace / debug / info / warn / error |
 
-## Разработка
+## Development
 
-### Go-бот
+### Go bot
 
 ```bash
 cd bot
@@ -68,11 +65,11 @@ uvicorn app.main:app --reload
 
 ## Roadmap
 
-- **v0.1** (текущая разработка): MVP с 5 платформами (Instagram, YouTube, TikTok, Twitter, Facebook), один IG-аккаунт
-- **v0.2**: ещё ~10 платформ, пул IG-аккаунтов, residential proxy, audio-режим
-- **v0.3**: собственная `go-instagram` библиотека вместо Python-сервиса
-- **v0.4**: webhook, health-check, метрики
+- **v0.1** (current development): MVP with 5 platforms (Instagram, YouTube, TikTok, Twitter, Facebook), single IG account
+- **v0.2**: ~10 more platforms, IG account pool, residential proxy, audio mode
+- **v0.3**: an in-house `go-instagram` library instead of the Python service
+- **v0.4**: webhook, health check, metrics
 
-## Лицензия
+## License
 
 MIT
