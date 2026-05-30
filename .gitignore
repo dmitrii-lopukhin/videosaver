@@ -41,5 +41,8 @@ Thumbs.db
 *.tgz
 *.tar.gz
 
+# Smoke test output
+bot/smoketest_out.mp4
+
 # Local-only design docs (kept outside the repo)
 docs/
