@@ -63,6 +63,31 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+Session files live in `insta-resolver/sessions/` (gitignored) and must be named
+`<ig_username>.session`. Generate one with a burner account:
+
+```bash
+docker run --rm -it -v "$(pwd)/insta-resolver/sessions:/sessions" \
+  instaloader/instaloader \
+  --login=<ig_username> --sessionfile=/sessions/<ig_username>.session --stories
+```
+
+Run the resolver tests:
+
+```bash
+cd insta-resolver
+python -m pip install -r requirements-dev.txt
+python -m pytest -v
+```
+
+Resolve a URL once the service is up:
+
+```bash
+curl -s -X POST http://localhost:8000/resolve \
+  -H 'Content-Type: application/json' \
+  -d '{"url": "https://www.instagram.com/reel/<shortcode>/"}'
+```
+
 ## Roadmap
 
 - **v0.1** (current development): MVP with 5 platforms (Instagram, YouTube, TikTok, Twitter, Facebook), single IG account
