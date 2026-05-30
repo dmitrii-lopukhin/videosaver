@@ -13,4 +13,5 @@ require (
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
+	gopkg.in/telebot.v3 v3.3.8 // indirect
 )
