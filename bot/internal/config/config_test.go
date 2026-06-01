@@ -98,3 +98,27 @@ func TestLoad_DefaultsWhenEnvAbsent(t *testing.T) {
 		t.Errorf("default LogLevel = %q", cfg.LogLevel)
 	}
 }
+
+func TestLoad_StorageChannelIDDefault(t *testing.T) {
+	t.Setenv("BOT_TOKEN", "x")
+	os.Unsetenv("STORAGE_CHANNEL_ID")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.StorageChannelID != 0 {
+		t.Errorf("StorageChannelID = %d, want 0", cfg.StorageChannelID)
+	}
+}
+
+func TestLoad_StorageChannelIDFromEnv(t *testing.T) {
+	t.Setenv("BOT_TOKEN", "x")
+	t.Setenv("STORAGE_CHANNEL_ID", "-1001234567890")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.StorageChannelID != -1001234567890 {
+		t.Errorf("StorageChannelID = %d, want -1001234567890", cfg.StorageChannelID)
+	}
+}

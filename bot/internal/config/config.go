@@ -16,6 +16,7 @@ type Config struct {
 	InlineTimeoutSec        int
 	CacheTTLSec             int
 	DownloadMaxBytes        int64
+	StorageChannelID        int64
 	LogLevel                string
 }
 
@@ -30,6 +31,7 @@ func Load() (*Config, error) {
 		InlineTimeoutSec:        getEnvInt("INLINE_TIMEOUT_SEC", 8),
 		CacheTTLSec:             getEnvInt("CACHE_TTL_SEC", 86400),
 		DownloadMaxBytes:        getEnvInt64("DOWNLOAD_MAX_BYTES", 52428800),
+		StorageChannelID:        getEnvInt64("STORAGE_CHANNEL_ID", 0),
 		LogLevel:                getEnv("LOG_LEVEL", "info"),
 	}
 
