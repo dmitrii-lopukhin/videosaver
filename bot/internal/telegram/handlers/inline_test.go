@@ -26,11 +26,9 @@ func (f *fakeExtractor) Resolve(_ context.Context, _ string, _ extractors.Resolv
 	return &extractors.VideoResult{DirectURL: "https://cdn/v.mp4", Title: "t", DurationSec: 10, SizeBytes: -1}, nil
 }
 
-type fakeCache struct {
-	fileID string
-}
+type fakeCache struct{ fileID string }
 
-func (f *fakeCache) Get(_ context.Context, _ string) (string, error)         { return f.fileID, nil }
+func (f *fakeCache) Get(_ context.Context, _ string) (string, error)          { return f.fileID, nil }
 func (f *fakeCache) GetJSON(_ context.Context, _ string, _ any) (bool, error) { return f.fileID != "", nil }
 func (f *fakeCache) Lock(_ context.Context, _ string, _ time.Duration) (bool, error) {
 	return true, nil
@@ -60,9 +58,19 @@ func TestInlineHandler_CacheHit_WithFileID(t *testing.T) {
 }
 
 func TestInlineHandler_CacheMiss_NoFileID(t *testing.T) {
-	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{fileID: ""}, &fakeQueue{}, 8)
+	q := &fakeQueue{}
+	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{fileID: ""}, q, 8)
 	result := h.Classify("https://instagram.com/p/ABC/")
 	if result != handlers.ClassifyCacheMiss {
 		t.Errorf("expected ClassifyCacheMiss, got %v", result)
+	}
+}
+
+func TestInlineHandler_ClassifyDoesNotEnqueue(t *testing.T) {
+	q := &fakeQueue{}
+	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{fileID: ""}, q, 8)
+	h.Classify("https://instagram.com/p/ABC/")
+	if q.enqueuedURL != "" {
+		t.Error("Classify should not enqueue jobs")
 	}
 }

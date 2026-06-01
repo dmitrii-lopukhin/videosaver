@@ -103,7 +103,8 @@ func (h *InlineHandler) Handle(log zerolog.Logger) tele.HandlerFunc {
 			})
 		}
 
-		// Cache miss: enqueue job and send user to PM to download.
+		// Cache miss: enqueue job, return a placeholder the user can tap.
+		// chosen_inline_result fires when they do — ChosenHandler takes it from there.
 		jobID, err := h.queue.Enqueue(ctx, jobs.Job{
 			URL:     norm,
 			UserID:  c.Query().Sender.ID,
@@ -114,10 +115,15 @@ func (h *InlineHandler) Handle(log zerolog.Logger) tele.HandlerFunc {
 			return c.Answer(&tele.QueryResponse{})
 		}
 
-		log.Info().Str("url", norm).Str("job_id", jobID).Msg("inline: cache miss, job enqueued")
+		log.Info().Str("url", norm).Str("job_id", jobID).Msg("inline: cache miss, placeholder sent")
 		return c.Answer(&tele.QueryResponse{
-			SwitchPMText:      "Получить видео",
-			SwitchPMParameter: jobID,
+			Results: tele.Results{
+				&tele.ArticleResult{
+					ResultBase: tele.ResultBase{ID: jobID},
+					Title:      "⏳ Загружаю видео…",
+					Text:       "⏳ Загружаю видео…",
+				},
+			},
 		})
 	}
 }
