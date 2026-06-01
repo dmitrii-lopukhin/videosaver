@@ -29,7 +29,10 @@ func (f *fakeExtractor) Resolve(_ context.Context, _ string, _ extractors.Resolv
 type fakeCache struct{ fileID string }
 
 func (f *fakeCache) Get(_ context.Context, _ string) (string, error)          { return f.fileID, nil }
-func (f *fakeCache) GetJSON(_ context.Context, _ string, _ any) (bool, error) { return f.fileID != "", nil }
+func (f *fakeCache) GetJSON(_ context.Context, _ string, _ any) (bool, error) { return false, nil }
+func (f *fakeCache) SetJSON(_ context.Context, _ string, _ any, _ time.Duration) error {
+	return nil
+}
 func (f *fakeCache) Lock(_ context.Context, _ string, _ time.Duration) (bool, error) {
 	return true, nil
 }
@@ -72,5 +75,25 @@ func TestInlineHandler_ClassifyDoesNotEnqueue(t *testing.T) {
 	h.Classify("https://instagram.com/p/ABC/")
 	if q.enqueuedURL != "" {
 		t.Error("Classify should not enqueue jobs")
+	}
+}
+
+// The Saved Messages branch resolves the direct URL so the video can be sent
+// in the inline answer itself (edit is impossible there).
+func TestInlineHandler_ResolveCached_ReturnsDirectURL(t *testing.T) {
+	h := handlers.NewInline(&fakeRegistry{canHandle: true}, &fakeCache{}, &fakeQueue{}, 8)
+	vr, err := h.ResolveCachedForTest(context.Background(), "https://instagram.com/reel/ABC/")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if vr.DirectURL != "https://cdn/v.mp4" {
+		t.Errorf("expected resolved direct URL, got %q", vr.DirectURL)
+	}
+}
+
+func TestInlineHandler_ResolveCached_UnknownURL(t *testing.T) {
+	h := handlers.NewInline(&fakeRegistry{canHandle: false}, &fakeCache{}, &fakeQueue{}, 8)
+	if _, err := h.ResolveCachedForTest(context.Background(), "https://youtube.com/watch?v=x"); err == nil {
+		t.Error("expected error for unsupported URL")
 	}
 }
