@@ -23,6 +23,8 @@ func (f *fakeChosenQueue) Delete(_ context.Context, _ string) error { return nil
 
 type fakeChosenCache struct{ stored map[string]string }
 
+func (f *fakeChosenCache) Get(_ context.Context, _ string) (string, error)          { return "", nil }
+func (f *fakeChosenCache) GetJSON(_ context.Context, _ string, _ any) (bool, error) { return false, nil }
 func (f *fakeChosenCache) Set(_ context.Context, key, val string, _ time.Duration) error {
 	if f.stored == nil {
 		f.stored = map[string]string{}
