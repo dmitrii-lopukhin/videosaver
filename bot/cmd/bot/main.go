@@ -59,6 +59,7 @@ func main() {
 		InlineTimeoutSec: cfg.InlineTimeoutSec,
 		PMTimeoutSec:     5 * 60,
 		DownloadMaxBytes: cfg.DownloadMaxBytes,
+		StorageChannelID: cfg.StorageChannelID,
 		Log:              log,
 	})
 	if err != nil {
