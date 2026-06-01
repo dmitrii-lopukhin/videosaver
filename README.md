@@ -55,6 +55,14 @@ go test ./...
 go build ./cmd/bot
 ```
 
+#### Storage channel setup (required for inline video directly in chat)
+
+1. Create a private Telegram channel
+2. Add your bot as admin with **Post Messages** permission
+3. Get the channel ID (forward any message from the channel to @userinfobot)
+4. Set `STORAGE_CHANNEL_ID=-100XXXXXXXXXX` in `.env`
+5. In @BotFather → `/setinlinefeedback` → your bot → set to `100%`
+
 ### Python insta-resolver
 
 ```bash
