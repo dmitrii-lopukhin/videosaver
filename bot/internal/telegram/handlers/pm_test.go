@@ -31,12 +31,13 @@ func (f *fakeFullExtractor) Resolve(_ context.Context, _ string, _ extractors.Re
 	return f.result, f.err
 }
 
-type fakeSetter struct{}
+type fakeSetter struct{ getFileID string }
 
-func (f *fakeSetter) Set(_ context.Context, _, _ string, _ time.Duration) error          { return nil }
-func (f *fakeSetter) SetJSON(_ context.Context, _ string, _ any, _ time.Duration) error  { return nil }
-func (f *fakeSetter) Lock(_ context.Context, _ string, _ time.Duration) (bool, error)    { return true, nil }
-func (f *fakeSetter) Unlock(_ context.Context, _ string) error                           { return nil }
+func (f *fakeSetter) Get(_ context.Context, _ string) (string, error)                   { return f.getFileID, nil }
+func (f *fakeSetter) Set(_ context.Context, _, _ string, _ time.Duration) error         { return nil }
+func (f *fakeSetter) SetJSON(_ context.Context, _ string, _ any, _ time.Duration) error { return nil }
+func (f *fakeSetter) Lock(_ context.Context, _ string, _ time.Duration) (bool, error)   { return true, nil }
+func (f *fakeSetter) Unlock(_ context.Context, _ string) error                          { return nil }
 
 func noSend(_ *extractors.VideoResult) (string, error) { return "", nil }
 
@@ -87,5 +88,58 @@ func TestPMHandler_Success(t *testing.T) {
 	}
 	if sent == nil || sent.DirectURL != vr.DirectURL {
 		t.Errorf("send callback not called with correct result")
+	}
+}
+
+func TestPMHandler_ProcessURL_UnsupportedURL(t *testing.T) {
+	h := handlers.NewPM(&fakeRegistry{canHandle: false}, &fakeJobQueue{}, &fakeSetter{}, 300, 52428800)
+	handled, err := h.ProcessURL(context.Background(), "just some text, not a url",
+		func(string) error { t.Error("sendCached must not be called"); return nil },
+		func(*extractors.VideoResult) (string, error) { t.Error("sendFresh must not be called"); return "", nil },
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if handled {
+		t.Error("unsupported URL must not be handled")
+	}
+}
+
+func TestPMHandler_ProcessURL_CacheHit_SendsCached(t *testing.T) {
+	h := handlers.NewPM(&fakeRegistry{canHandle: true}, &fakeJobQueue{}, &fakeSetter{getFileID: "cached-file-id"}, 300, 52428800)
+	var cached string
+	handled, err := h.ProcessURL(context.Background(), "https://instagram.com/reel/X/",
+		func(fileID string) error { cached = fileID; return nil },
+		func(*extractors.VideoResult) (string, error) { t.Error("sendFresh must not be called on cache hit"); return "", nil },
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !handled {
+		t.Error("supported URL must be handled")
+	}
+	if cached != "cached-file-id" {
+		t.Errorf("expected cached file_id to be sent, got %q", cached)
+	}
+}
+
+func TestPMHandler_ProcessURL_CacheMiss_ResolvesAndSends(t *testing.T) {
+	vr := &extractors.VideoResult{DirectURL: "https://cdn/v.mp4", DurationSec: 7, SizeBytes: -1}
+	h := handlers.NewPM(&fakeRegistry{canHandle: true}, &fakeJobQueue{}, &fakeSetter{}, 300, 52428800)
+	h.OverrideExtractor(&fakeFullExtractor{result: vr})
+
+	var sent *extractors.VideoResult
+	handled, err := h.ProcessURL(context.Background(), "https://instagram.com/reel/X/",
+		func(string) error { t.Error("sendCached must not be called on cache miss"); return nil },
+		func(r *extractors.VideoResult) (string, error) { sent = r; return "fresh-file-id", nil },
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !handled {
+		t.Error("supported URL must be handled")
+	}
+	if sent == nil || sent.DirectURL != vr.DirectURL {
+		t.Error("sendFresh not called with resolved result")
 	}
 }

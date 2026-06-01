@@ -60,5 +60,6 @@ func registerHandlers(b *tele.Bot, deps Deps) {
 
 	b.Handle(tele.OnQuery, inlineH.Handle(deps.Log))
 	b.Handle("/start", pmH.Handle(b, deps.Log))
+	b.Handle(tele.OnText, pmH.HandleText(b, deps.Log))
 	b.Handle(tele.OnInlineResult, chosenH.Handle(b, botUsername, deps.Log))
 }
